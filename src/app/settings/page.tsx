@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowLeft, Sun, Moon, LogOut, User as UserIcon, FileText } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
-import { clearDatabase } from "@/lib/db";
 
 const APP_VERSION = "1.0.0";
 

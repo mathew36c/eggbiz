@@ -15,16 +15,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Simple password generation (6 letters)
-function generatePassword(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz";
-  let password = "";
-  for (let i = 0; i < 6; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
-}
-
 // Default users with their generated passwords
 const DEFAULT_USERS = [
   { email: "admin@eggbiz.com", name: "Admin", password: "xqzmlk" },

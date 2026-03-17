@@ -10,7 +10,7 @@ import {
 import { getPendingSales, getPendingExpenses, getInventoryStock, getInventoryPurchases } from "@/lib/db";
 import { Sale, Expense, InventoryPurchase, InventoryStock } from "@/lib/types";
 import { calculateProfitMetrics } from "@/lib/profit";
-import { TimeRangeSelector, filterByDateRange, getTimeRangeLabel } from "@/components/TimeRangeSelector";
+import { TimeRangeSelector, filterByDateRange } from "@/components/TimeRangeSelector";
 import { useTimeRange } from "@/components/TimeRangeContext";
 
 const COLORS = ["#FFF9C4", "#FFECB3", "#FFE082", "#FFD54F"];
