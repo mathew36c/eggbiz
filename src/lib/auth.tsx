@@ -16,11 +16,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Default users with their generated passwords
-const DEFAULT_USERS = [
-  { email: "admin@eggbiz.com", name: "Admin", password: "xqzmlk" },
-  { email: "frank@eggbiz.com", name: "Frank", password: "pqrstu" },
-  { email: "arnel@eggbiz.com", name: "Arnel", password: "vwxyza" },
-  { email: "jose@eggbiz.com", name: "Jose", password: "bcdfgk" },
+const DEFAULT_USERS: { email: string; name: string; role: string; password: string }[] = [
+  { email: "admin@eggbiz.com", name: "Admin", role: "super_admin", password: "xqzmlk" },
+  { email: "frank@eggbiz.com", name: "Frank", role: "manager", password: "pqrstu" },
+  { email: "arnel@eggbiz.com", name: "Arnel", role: "manager", password: "vwxyza" },
+  { email: "jose@eggbiz.com", name: "Jose", role: "operator", password: "bcdfgk" },
 ];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
