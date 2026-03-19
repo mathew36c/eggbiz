@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Receipt, Edit3, UserCheck, UserX, History, Egg } from "lucide-react";
 import { getTransactionLogs } from "@/lib/db";
+import { useAuth } from "@/lib/auth";
 import { TransactionLog, LogAction } from "@/lib/types";
 
 const ACTION_CONFIG: Record<LogAction, { label: string; icon: string; color: string }> = {
@@ -82,12 +84,29 @@ function formatAction(log: TransactionLog) {
 }
 
 export default function LogsPage() {
+  const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [logs, setLogs] = useState<TransactionLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!authLoading && user?.role !== "super_admin") {
+      router.push("/");
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (user?.role !== "super_admin") return;
     loadLogs();
-  }, []);
+  }, [user]);
+
+  if (authLoading || user?.role !== "super_admin") {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   async function loadLogs() {
     setLoading(true);

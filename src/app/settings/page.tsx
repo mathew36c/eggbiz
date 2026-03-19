@@ -85,13 +85,15 @@ export default function SettingsPage() {
       <section>
         <h2 className="text-lg font-semibold mb-3">Navigation</h2>
         <div className="bg-card border rounded-lg overflow-hidden">
-          <Link
-            href="/logs"
-            className="w-full flex items-center gap-3 p-4 touch-manipulation hover:bg-muted transition-colors"
-          >
-            <FileText className="h-5 w-5" />
-            <span className="font-medium">Logs</span>
-          </Link>
+          {user?.role === "super_admin" && (
+            <Link
+              href="/logs"
+              className="w-full flex items-center gap-3 p-4 touch-manipulation hover:bg-muted transition-colors"
+            >
+              <FileText className="h-5 w-5" />
+              <span className="font-medium">Logs</span>
+            </Link>
+          )}
         </div>
       </section>
 
