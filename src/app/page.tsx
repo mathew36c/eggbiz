@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DollarSign, Package, TrendingUp, TrendingDown, Wifi, RefreshCw, CloudOff, CloudSync } from "lucide-react";
-import { getInventoryStock, getPendingSales, getPendingExpenses, getInventoryPurchases, initSupabase, loadFromSupabase, needsInitialLoad, getOnlineStatus, getPendingSyncCount, triggerSync, refreshFromSupabase, startPolling } from "@/lib/db";
+import { getInventoryStock, getPendingSales, getPendingExpenses, getInventoryPurchases, initSupabase, loadFromSupabase, needsInitialLoad, getOnlineStatus, getPendingSyncCount, triggerSync, startPolling } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
 import { InventoryStock, DailyMetrics, Sale, Expense } from "@/lib/types";
 import { calculateProfitMetrics } from "@/lib/profit";
@@ -64,6 +64,7 @@ export default function DashboardPage() {
     }
   }, [user, isLoading, router]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!user || isInitializing) return;
     

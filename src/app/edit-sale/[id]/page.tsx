@@ -27,6 +27,7 @@ export default function EditSalePage() {
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!canEdit) {
       router.push("/sales");
