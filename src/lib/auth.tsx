@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "@/lib/types";
-import { addTransactionLog, getSupabase, initSupabase } from "./db";
+import { addTransactionLog, getSupabase, initSupabase, startPolling } from "./db";
 import { v4 as uuidv4 } from "uuid";
 
 interface AuthContextType {
@@ -129,6 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             setUser(userData);
             localStorage.setItem("egg-user", JSON.stringify(userData));
+            
+            // Start polling for real-time sync
+            startPolling(30000);
             
             await addTransactionLog({
               action: "login",

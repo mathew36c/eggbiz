@@ -139,7 +139,11 @@ export async function triggerSync() {
   const db = await getDB();
   const queue = await db.getAll("syncQueue");
   
-  if (queue.length === 0) return;
+  if (queue.length === 0) {
+    // Even if there's nothing to sync, refresh from Supabase to get other users' data
+    await refreshFromSupabase();
+    return;
+  }
   
   console.log(`Syncing ${queue.length} pending changes...`);
   
@@ -184,6 +188,9 @@ export async function triggerSync() {
   if (syncedIds.length > 0) {
     console.log(`Synced ${syncedIds.length} items successfully`);
   }
+  
+  // After syncing, refresh from Supabase to get updates from other users
+  await refreshFromSupabase();
 }
 
 async function syncSale(supabase: SupabaseClient, operation: string, data: any) {
@@ -372,6 +379,72 @@ export async function needsInitialLoad(): Promise<boolean> {
   const sales = await db.getAll("pendingSales");
   const inventory = await db.getAll("inventory");
   return sales.length === 0 && inventory.length === 0;
+}
+
+// Refresh local data from Supabase (for getting updates from other users)
+export async function refreshFromSupabase() {
+  const supabase = getSupabase();
+  if (!supabase || !isOnline) return null;
+  
+  try {
+    const [salesRes, expensesRes, inventoryRes, purchasesRes, logsRes] = await Promise.all([
+      supabase.from("sales").select("*").order("created_at", { ascending: false }).limit(500),
+      supabase.from("expenses").select("*").order("created_at", { ascending: false }).limit(500),
+      supabase.from("inventory").select("*"),
+      supabase.from("inventory_purchases").select("*").order("created_at", { ascending: false }).limit(500),
+      supabase.from("transaction_logs").select("*").order("created_at", { ascending: false }).limit(500),
+    ]);
+    
+    const db = await getDB();
+    
+    // Store in local DB (overwrite to get updates from other users)
+    if (salesRes.data) {
+      await db.clear("pendingSales");
+      for (const sale of salesRes.data) {
+        await db.put("pendingSales", { ...sale, synced: true });
+      }
+    }
+    
+    if (expensesRes.data) {
+      await db.clear("pendingExpenses");
+      for (const expense of expensesRes.data) {
+        await db.put("pendingExpenses", { ...expense, synced: true });
+      }
+    }
+    
+    if (inventoryRes.data) {
+      await db.clear("inventory");
+      for (const stock of inventoryRes.data) {
+        await db.put("inventory", stock);
+      }
+    }
+    
+    if (purchasesRes.data) {
+      await db.clear("inventoryPurchases");
+      for (const purchase of purchasesRes.data) {
+        await db.put("inventoryPurchases", { ...purchase, pending_sync: false, synced: true });
+      }
+    }
+    
+    if (logsRes.data) {
+      await db.clear("transactionLogs");
+      for (const log of logsRes.data) {
+        await db.put("transactionLogs", { ...log, supabase_id: log.id });
+      }
+    }
+    
+    console.log("Data refreshed from Supabase successfully");
+    
+    // Dispatch event so components can react to the data update
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("supabase-data-updated"));
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error refreshing from Supabase:", error);
+    return null;
+  }
 }
 
 // ============ EXPORTED DB FUNCTIONS ============
@@ -606,4 +679,30 @@ export async function getPendingSyncCount(): Promise<number> {
   const db = await getDB();
   const queue = await db.getAll("syncQueue");
   return queue.length;
+}
+
+// Polling interval for automatic sync
+let syncIntervalId: NodeJS.Timeout | null = null;
+
+// Start polling for real-time sync
+export function startPolling(intervalMs: number = 30000) {
+  if (syncIntervalId) return;
+  
+  syncIntervalId = setInterval(async () => {
+    if (isOnline) {
+      console.log("Polling: checking for updates from Supabase...");
+      await refreshFromSupabase();
+    }
+  }, intervalMs);
+  
+  console.log(`Started polling every ${intervalMs}ms`);
+}
+
+// Stop polling
+export function stopPolling() {
+  if (syncIntervalId) {
+    clearInterval(syncIntervalId);
+    syncIntervalId = null;
+    console.log("Stopped polling");
+  }
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DollarSign, Package, TrendingUp, TrendingDown, Wifi, RefreshCw, CloudOff, CloudSync } from "lucide-react";
-import { getInventoryStock, getPendingSales, getPendingExpenses, getInventoryPurchases, initSupabase, loadFromSupabase, needsInitialLoad, getOnlineStatus, getPendingSyncCount, triggerSync } from "@/lib/db";
+import { getInventoryStock, getPendingSales, getPendingExpenses, getInventoryPurchases, initSupabase, loadFromSupabase, needsInitialLoad, getOnlineStatus, getPendingSyncCount, triggerSync, refreshFromSupabase, startPolling } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
 import { InventoryStock, DailyMetrics, Sale, Expense } from "@/lib/types";
 import { calculateProfitMetrics } from "@/lib/profit";
@@ -49,6 +49,9 @@ export default function DashboardPage() {
         }
       }
       
+      // Start polling for real-time sync
+      startPolling(30000); // Poll every 30 seconds
+      
       setIsInitializing(false);
     }
     
@@ -70,15 +73,21 @@ export default function DashboardPage() {
       await triggerSync();
     };
     const handleOffline = () => setIsOnline(false);
+    const handleDataUpdated = () => {
+      console.log("Data updated from Supabase, reloading...");
+      loadData();
+    };
     
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
+    window.addEventListener("supabase-data-updated", handleDataUpdated);
     
     loadData();
     
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("supabase-data-updated", handleDataUpdated);
     };
   }, [user, isInitializing]);
 
