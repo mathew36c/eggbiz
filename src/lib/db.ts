@@ -316,11 +316,12 @@ export async function loadFromSupabase() {
   if (!supabase || !isOnline) return null;
   
   try {
-    const [salesRes, expensesRes, inventoryRes, purchasesRes] = await Promise.all([
+    const [salesRes, expensesRes, inventoryRes, purchasesRes, logsRes] = await Promise.all([
       supabase.from("sales").select("*").order("created_at", { ascending: false }),
       supabase.from("expenses").select("*").order("created_at", { ascending: false }),
       supabase.from("inventory").select("*"),
       supabase.from("inventory_purchases").select("*").order("created_at", { ascending: false }),
+      supabase.from("transaction_logs").select("*").order("created_at", { ascending: false }),
     ]);
     
     const db = await getDB();
@@ -347,6 +348,13 @@ export async function loadFromSupabase() {
     if (purchasesRes.data) {
       for (const purchase of purchasesRes.data) {
         await db.put("inventoryPurchases", { ...purchase, pending_sync: false, synced: true });
+      }
+    }
+    
+    // Store transaction logs
+    if (logsRes.data) {
+      for (const log of logsRes.data) {
+        await db.put("transactionLogs", { ...log, supabase_id: log.id });
       }
     }
     
@@ -568,7 +576,7 @@ export async function addTransactionLog(log: Omit<TransactionLog, "id" | "create
   }
 }
 
-export async function getTransactionLogs(limit: number = 100): Promise<TransactionLog[]> {
+export async function getTransactionLogs(limit: number = 500): Promise<TransactionLog[]> {
   const db = await getDB();
   const logs = await db.getAll("transactionLogs");
   return logs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, limit);
